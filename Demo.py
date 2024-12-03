@@ -15,7 +15,7 @@ except Exception as e:
 
 adj_list, vertices, edges = Database.Load_Graph(collection,'674df8fbb2c1143f2130cf15')
 print(adj_list)
-
+#hi
 seq = Algorithm.all_components_dfs(adj_list, vertices)
 print(seq)
 
