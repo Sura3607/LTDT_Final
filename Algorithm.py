@@ -2,7 +2,7 @@
 from collections import deque
 import pandas as pd
 import numpy as np
-
+import heapq
 
 ##################################################################################################################################
 def dfs(adj_list, vertices, start=None):
@@ -124,3 +124,32 @@ def find_path_bfs(adj_list, vertices, start, end):
                 visited.append(neighbor)
 
     return None
+
+#Tu start đến tất cả các đỉnh
+#Dung cho đồ thị có trọng số(ko âm)
+def dijkstra(adj_list, vertices, start = None):
+    if start is None:
+        start = vertices[0]
+
+    distances = {v: float('inf') for v in vertices}
+    distances[start] = 0
+    pred = {v: [] for v in vertices}
+
+    priority_queue = [(0, start)]  # (khoảng cách, đỉnh)
+
+    while priority_queue:
+        curr_distance, curr_vertex = heapq.heappop(priority_queue)
+
+        if curr_distance > distances[curr_vertex]:
+            continue
+
+        for neighbor, weight in adj_list[curr_vertex]:
+            distance = curr_distance + weight
+
+            # Nếu tìm thấy khoảng cách ngắn hơn, cập nhật
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                pred[neighbor] = pred[curr_vertex] + [curr_vertex]
+                heapq.heappush(priority_queue, (distance, neighbor))
+
+    return distances, pred
