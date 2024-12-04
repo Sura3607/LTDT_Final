@@ -3,6 +3,7 @@ from collections import deque
 import pandas as pd
 import numpy as np
 import heapq
+import copy
 
 ##################################################################################################################################
 def dfs(adj_list, vertices, start=None):
@@ -153,3 +154,32 @@ def dijkstra(adj_list, vertices, start = None):
                 heapq.heappush(priority_queue, (distance, neighbor))
 
     return distances, pred
+
+#Tìm chu trình Euler
+def hierholzer(adj_list, vertices):
+    local_adj_list = copy.deepcopy(adj_list)
+    
+    # Kiểm tra điều kiện 
+    for vertex in vertices:
+        if len(local_adj_list[vertex]) % 2 != 0:
+            return "Không tồn tại chu trình Euler: Đỉnh có bậc lẻ."
+
+    start_vertex = vertices[0]
+    stack = [start_vertex]  # Stack dùng để lưu các đỉnh trong quá trình duyệt
+    euler_path = []         # Kết quả: Chu trình Euler
+
+    while stack:
+        current_vertex = stack[-1]
+
+        if local_adj_list[current_vertex]:
+            next_vertex, weight = local_adj_list[current_vertex].pop()  # Lấy đỉnh kề và trọng số
+            local_adj_list[next_vertex].remove((current_vertex, weight))
+            stack.append(next_vertex)
+        else:
+            # Nếu không còn cạnh nào, di chuyển ngược lại
+            euler_path.append(stack.pop())
+
+    # Đảo ngược chu trình Euler
+    euler_path.reverse()
+    return euler_path
+
