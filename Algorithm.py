@@ -12,16 +12,19 @@ def dfs(adj_list, vertices, start=None):
         start = vertices[0]
     # Khởi tạo 
     stack = [start]
-    visited = [start]
+    visited = []
 
     while stack:
         vertex = stack.pop()
+        if vertex in visited:
+            continue
+
+        visited.append(vertex)
         seq.append(vertex)
 
         for neighbor, _ in adj_list.get(vertex, []):
-            if neighbor not in visited:
+            if neighbor not in visited and neighbor in vertices:
                 stack.append(neighbor)
-                visited.append(neighbor)
     
     return seq
     
@@ -42,12 +45,16 @@ def find_path_dfs(adj_list, vertices, start, end):
     if start not in adj_list or end not in adj_list:
         return None
     stack = [start]
-    visited = [start]
+    visited = []
     parent = {start: None}
 
     while stack:
         vertex = stack.pop()
-        
+
+        if vertex in visited:
+            continue
+        visited.append(vertex)
+
         if vertex == end:
             path = []
             while vertex is not None:
@@ -60,7 +67,6 @@ def find_path_dfs(adj_list, vertices, start, end):
             if neighbor not in visited:
                 parent[neighbor] = vertex  # Ghi lại cha của neighbor
                 stack.append(neighbor)
-                visited.append(neighbor)
     
     return None
 ##################################################################################################################################
@@ -182,4 +188,63 @@ def hierholzer(adj_list, vertices):
     # Đảo ngược chu trình Euler
     euler_path.reverse()
     return euler_path
+
+#Hàm tạo tập hợp
+def generate_subsets(cut_sets):
+    subsets = []
+
+    def backtrack(start, path):
+        # Thêm tập con hiện tại vào danh sách
+        subsets.append(path)
+
+        for i in range(start, len(cut_sets)):
+            # Gọi đệ quy với đỉnh tiếp theo
+            backtrack(i + 1, path + [cut_sets[i]])
+
+    backtrack(0, [])
+    subsets.sort(key=len)
+    return subsets
+
+#tìm các đỉnh cắt đơn, không phải tập đỉnh cắt tối thiểu
+def CriticalVertices(adj_list,vertices):
+    criticalVertices = []
+
+    components = len(all_components_dfs(adj_list,vertices))
+
+    for vertex in vertices:
+
+        _vertices = list(set(vertices) - set([vertex]))
+        new_adj_list = {v: [neigh for neigh in adj_list[v] if neigh != vertex] for v in adj_list}
+        newComponents = len(all_components_dfs(new_adj_list,_vertices))
+
+        if newComponents > components:
+            criticalVertices.append(vertex)
+    return criticalVertices
+    
+#Tìm cạnh cầu
+def Bridges(adj_list, vertices, edges):
+    bridges = []
+    
+    # Sử dụng bản sao đồ thị để kiểm tra số thành phần liên thông ban đầu
+    components = len(all_components_dfs(adj_list, vertices))
+
+    for v_from, v_to, _ in edges:
+        local_adj_list = copy.deepcopy(adj_list)  # Sao chép đồ thị
+        
+        # Xóa cạnh giữa v_from và v_to trong danh sách kề của v_from
+        if v_from in local_adj_list:
+            local_adj_list[v_from].remove((v_to, _))  # Xóa v_to khỏi danh sách kề của v_from
+            print(v_to)
+        # Xóa cạnh giữa v_to và v_from trong danh sách kề của v_to
+        if v_to in local_adj_list:
+            local_adj_list[v_to].remove((v_from, _))  # Xóa v_from khỏi danh sách kề của v_to
+            print(v_from)
+        # Kiểm tra số thành phần liên thông sau khi xóa cạnh
+        newComponents = len(all_components_dfs(local_adj_list, vertices))  # Sử dụng local_adj_list đã thay đổi
+        
+        # Nếu số thành phần liên thông tăng, đây là một cầu (bridge)
+        if newComponents > components:
+            bridges.append((v_from, v_to))  # Thêm cặp (v_from, v_to) vào danh sách bridges
+    
+    return bridges
 
