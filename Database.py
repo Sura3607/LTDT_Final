@@ -1,5 +1,7 @@
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+import pandas as pd
+import numpy as np
 
 def Connect():
     connection_string = "mongodb+srv://ltdtFinal:z1PuIwaKQZvxkub8@graph-database-cluster.3976d.mongodb.net/?retryWrites=true&w=majority&appName=graph-database-cluster"
@@ -8,7 +10,7 @@ def Connect():
     # Lấy cơ sở dữ liệu và collection
     db = client["Graphs"]
     collection = db["graph"]
-    print("Kết nối thành công đến MongoDB!")
+    #print("Kết nối thành công đến MongoDB!")
     return collection
 
 
@@ -54,3 +56,23 @@ def Load_Graph(collection, graph_id):
         print("Không tìm thấy đồ thị với _id đã cho.")
         return None, None, None
     
+def adj_list_to_edges_list(adj_list, vertices):
+    edgesList = []
+
+    for v_from in vertices:
+        for v_to, weight in adj_list[v_from]:  # Lấy cặp đỉnh v_from và v_to
+            edgesList.append((v_from, v_to,weight))  # Thêm cặp đỉnh vào edgesList
+    
+    return edgesList
+
+def adj_list_to_adj_df(adj_list, vertices):
+    df = pd.DataFrame(np.inf, index=vertices, columns=vertices)
+    
+    # Đặt đường chéo là 0
+    for vertex in vertices:
+        df.at[vertex, vertex] = 0
+
+    for vertex, neighbors in adj_list.items():
+        for neighbor, weight in neighbors:
+            df.at[vertex, neighbor] = weight
+    return df
