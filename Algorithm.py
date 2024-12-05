@@ -3,7 +3,9 @@ from collections import deque
 import pandas as pd
 import numpy as np
 import heapq
+import itertools
 import copy
+import Database
 
 ##################################################################################################################################
 def dfs(adj_list, vertices, start=None):
@@ -12,19 +14,16 @@ def dfs(adj_list, vertices, start=None):
         start = vertices[0]
     # Khởi tạo 
     stack = [start]
-    visited = []
+    visited = [start]
 
     while stack:
         vertex = stack.pop()
-        if vertex in visited:
-            continue
-
-        visited.append(vertex)
         seq.append(vertex)
 
         for neighbor, _ in adj_list.get(vertex, []):
             if neighbor not in visited and neighbor in vertices:
                 stack.append(neighbor)
+                visited.append(vertex)
     
     return seq
     
@@ -45,15 +44,11 @@ def find_path_dfs(adj_list, vertices, start, end):
     if start not in adj_list or end not in adj_list:
         return None
     stack = [start]
-    visited = []
+    visited = [start]
     parent = {start: None}
 
     while stack:
         vertex = stack.pop()
-
-        if vertex in visited:
-            continue
-        visited.append(vertex)
 
         if vertex == end:
             path = []
@@ -67,6 +62,7 @@ def find_path_dfs(adj_list, vertices, start, end):
             if neighbor not in visited:
                 parent[neighbor] = vertex  # Ghi lại cha của neighbor
                 stack.append(neighbor)
+                visited.append(vertex)
     
     return None
 ##################################################################################################################################
@@ -222,29 +218,77 @@ def CriticalVertices(adj_list,vertices):
     return criticalVertices
     
 #Tìm cạnh cầu
-def Bridges(adj_list, vertices, edges):
+def Bridges(adj_list, vertices):
     bridges = []
-    
-    # Sử dụng bản sao đồ thị để kiểm tra số thành phần liên thông ban đầu
     components = len(all_components_dfs(adj_list, vertices))
 
-    for v_from, v_to, _ in edges:
-        local_adj_list = copy.deepcopy(adj_list)  # Sao chép đồ thị
-        
-        # Xóa cạnh giữa v_from và v_to trong danh sách kề của v_from
-        if v_from in local_adj_list:
-            local_adj_list[v_from].remove((v_to, _))  # Xóa v_to khỏi danh sách kề của v_from
-            print(v_to)
-        # Xóa cạnh giữa v_to và v_from trong danh sách kề của v_to
-        if v_to in local_adj_list:
-            local_adj_list[v_to].remove((v_from, _))  # Xóa v_from khỏi danh sách kề của v_to
-            print(v_from)
-        # Kiểm tra số thành phần liên thông sau khi xóa cạnh
-        newComponents = len(all_components_dfs(local_adj_list, vertices))  # Sử dụng local_adj_list đã thay đổi
-        
-        # Nếu số thành phần liên thông tăng, đây là một cầu (bridge)
-        if newComponents > components:
-            bridges.append((v_from, v_to))  # Thêm cặp (v_from, v_to) vào danh sách bridges
-    
+    edges = []
+    for v_from in adj_list:
+        for v_to, _ in adj_list[v_from]:
+            if (v_to, v_from) not in edges:  # Tránh thêm cạnh ngược (đồ thị vô hướng)
+                edges.append((v_from, v_to))
+
+    for v_from, v_to in edges:
+        local_adj_list = copy.deepcopy(adj_list)
+
+        # Xóa cạnh giữa v_from và v_to
+        local_adj_list[v_from] = [pair for pair in local_adj_list[v_from] if pair[0] != v_to]
+        local_adj_list[v_to] = [pair for pair in local_adj_list[v_to] if pair[0] != v_from]
+
+        new_components = len(all_components_dfs(local_adj_list, vertices)) 
+
+        if new_components > components:
+            bridges.append((v_from, v_to))
+
     return bridges
 
+def held_karp_tsp(adj_list, vertices):
+    adj_df = Database.adj_list_to_adj_df(adj_list, vertices)
+    n = len(vertices)
+    dp = {}
+    parent = {}  # Dùng để dò ngược
+    
+    # Khởi tạo: g({k}, k) = d(1, k)
+    for k in range(1, n):
+        dp[(frozenset([k]), k)] = adj_df.iloc[0, k]
+        parent[(frozenset([k]), k)] = 0  # Xuất phát từ đỉnh đầu tiên
+
+    # Xây dựng tập hợp con (subset) kích thước tăng dần
+    for subset_size in range(2, n): 
+        for subset in itertools.combinations(range(1, n), subset_size):
+            subset = frozenset(subset)
+            for k in subset:
+                # Tính g(S, k) = min [g(S \ {k}, m) + d(m, k)]
+                subset_without_k = subset - {k}
+                min_cost, min_m = min(
+                    ((dp[(subset_without_k, m)] + adj_df.iloc[m, k]), m)
+                    for m in subset_without_k
+                )
+                dp[(subset, k)] = min_cost
+                parent[(subset, k)] = min_m  # Lưu đỉnh m tốt nhất dẫn đến k
+
+    # Tính giá trị tối ưu: opt = min [g({2, ..., n}, k) + d(k, 1)]
+    full_set = frozenset(range(1, n))
+    opt, last_node = min(
+        ((dp[(full_set, k)] + adj_df.iloc[k, 0]), k)
+        for k in range(1, n)
+    )
+
+    if opt == np.inf:
+        return "Không có chu trình Hamilton", []
+
+    # Truy vết để tìm chu trình
+    path = [0]  # Bắt đầu từ đỉnh 0
+    current_set = full_set
+    current_node = last_node
+
+    while current_node != 0:
+        path.append(current_node)
+        next_node = parent[(current_set, current_node)]
+        current_set = current_set - {current_node}
+        current_node = next_node
+
+    path.append(0)  # Kết thúc tại đỉnh 0
+    path = [vertices[i] for i in path]
+    path.reverse()
+    return opt, path
