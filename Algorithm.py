@@ -292,3 +292,140 @@ def held_karp_tsp(adj_list, vertices):
     path = [vertices[i] for i in path]
     path.reverse()
     return opt, path
+
+def boruvka(vertices, adjacency_list):
+
+    # Khởi tạo các thành phần, mỗi đỉnh là một tập hợp riêng biệt
+    components = {v: v for v in vertices}  # Dictionary để lưu component của từng đỉnh
+    mst = []  # Danh sách các cạnh trong cây khung nhỏ nhất
+    total_weight = 0  # Tổng trọng số của cây khung
+    
+    def find(component, v):
+        """Tìm thành phần gốc của đỉnh v"""
+        if component[v] != v:
+            component[v] = find(component, component[v])  # Tối ưu hóa đường đi
+        return component[v]
+
+    def union(component, u, v):
+        """Hợp nhất hai thành phần của đỉnh u và v."""
+        root_u = find(component, u)
+        root_v = find(component, v)
+        if root_u != root_v:
+            component[root_v] = root_u
+
+    while len(set(find(components, v) for v in vertices)) > 1:  # Lặp cho đến khi chỉ còn 1 thành phần
+        # Bước 1: Tìm cạnh nhỏ nhất nối từ mỗi thành phần
+        cheapest = {}
+        for u in adjacency_list:
+            for v, weight in adjacency_list[u]:
+                root_u = find(components, u)
+                root_v = find(components, v)
+                if root_u != root_v:  # Chỉ xét cạnh giữa hai thành phần khác nhau
+                    if root_u not in cheapest or cheapest[root_u][2] > weight:
+                        cheapest[root_u] = (u, v, weight)
+                    if root_v not in cheapest or cheapest[root_v][2] > weight:
+                        cheapest[root_v] = (u, v, weight)
+        
+        # Bước 2: Thêm các cạnh nhỏ nhất vào MST và hợp nhất thành phần
+        for u, v, weight in cheapest.values():
+            root_u = find(components, u)
+            root_v = find(components, v)
+            if root_u != root_v:  # Đảm bảo không tạo chu trình
+                mst.append((u, v, weight))
+                total_weight += weight
+                union(components, u, v)
+
+    return mst, total_weight
+
+
+def kruskal(vertices, edges):
+    # Hàm tìm đại diện của một đỉnh trong DSU (Disjoint Set Union)
+    def find(parent, x):
+        if parent[x] != x:
+            parent[x] = find(parent, parent[x])  # Path compression
+        return parent[x]
+
+    # Hàm gộp hai đỉnh vào cùng một tập hợp con
+    def union(parent, rank, x, y):
+        rootX = find(parent, x)
+        rootY = find(parent, y)
+        
+        if rootX != rootY:
+            # Union by rank
+            if rank[rootX] > rank[rootY]:
+                parent[rootY] = rootX
+            elif rank[rootX] < rank[rootY]:
+                parent[rootX] = rootY
+            else:
+                parent[rootY] = rootX
+                rank[rootX] += 1
+
+    def sort_edges(edge):
+        return edge[2]
+
+    edges.sort(key=sort_edges)
+
+    parent = list(range(len(vertices)))  # Mảng parent để lưu đại diện các đỉnh
+    rank = [0] * len(vertices)  # Mảng rank để tối ưu việc gộp các tập hợp con
+
+    mst = []  # Danh sách lưu các cạnh của cây khung nhỏ nhất
+    total_weight = 0  # Tổng trọng số của cây khung nhỏ nhất
+
+    for u, v, weight in edges:
+        # Nếu hai đỉnh không thuộc cùng một tập hợp con, kết nối chúng
+        if find(parent, u) != find(parent, v):
+            union(parent, rank, u, v)
+            mst.append((vertices[u], vertices[v], weight))  # Thêm cạnh vào MST
+            total_weight += weight
+
+    return mst, total_weight
+
+    
+# Hàm sắp xếp các cạnh theo trọng số
+
+
+
+def bellman_ford(vertices, edges, source):
+    # Khởi tạo khoảng cách từ nguồn đến các đỉnh
+    distance = {vertex: float('inf') for vertex in vertices}
+    distance[source] = 0
+
+    # Lặp qua tất cả các cạnh (V-1 lần)
+    for _ in range(len(vertices) - 1):
+        for u, v, weight in edges:
+            if distance[u] != float('inf') and distance[u] + weight < distance[v]:
+                distance[v] = distance[u] + weight
+
+    # Kiểm tra chu trình âm
+    for u, v, weight in edges:
+        if distance[u] != float('inf') and distance[u] + weight < distance[v]:
+            raise ValueError("Đồ thị có chu trình âm")
+
+    return distance
+
+
+
+
+def greedy_coloring(vertices, adj_list):
+    # Khởi tạo một từ điển để lưu màu của các đỉnh, ban đầu chưa có màu (None)
+    colorcollection = ['yellow', 'orange', 'blue']
+    colors = {vertex: None for vertex in vertices}
+    
+    # Duyệt qua tất cả các đỉnh trong đồ thị
+    for vertex in vertices:
+        # Lấy các màu đã được sử dụng cho các đỉnh kề của đỉnh hiện tại
+        neighbor_colors = set()
+        for neighbor in adj_list[vertex]:
+            if colors[neighbor] is not None:
+                neighbor_colors.add(colors[neighbor])
+        
+        colorapply = None
+        for color in colorcollection:
+            if color not in neighbor_colors:
+                colorapply = color
+                break
+        
+        # Gán màu cho đỉnh
+        colors[vertex] = colorapply
+    
+    return colors
