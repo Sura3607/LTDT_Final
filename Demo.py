@@ -1,32 +1,46 @@
 import sys
-from pymongo import MongoClient
-from bson.objectid import ObjectId
 
 import Database
 import Algorithm
 
 try:
-    collection = Database.Connect()
-    #all_data = collection.find().sort("name",1)
+    driver = Database.Connect()
+    print("Kết nối thành công!")
 except Exception as e:
     print("Kết nối thất bại!")
     sys.exit(1)
     
 
-adj_list, vertices, edges = Database.Load_Graph(collection,'674df8fbb2c1143f2130cf15')
+adj_list, vertices,edges= Database.Load_Graph(driver,'673616adf36b60bb91cb64a0')
 print(adj_list)
+# print(vertices)
+# print(edges)
 
-seq = Algorithm.all_components_dfs(adj_list, vertices)
-print(seq)
+# print(Algorithm.all_components_dfs(adj_list,vertices))
 
-# seq_dfs = Algorithm.dfs(adj_list,vertices,'v01')
-# print("DFS: " + str(seq_dfs))
+#To mau
+# print(Algorithm.greedy_coloring(vertices,adj_list))
 
-# path = Algorithm.find_path_dfs(adj_list,vertices,'v02','v01')
-# print(path)
+#Haminton
+# print(Algorithm.bellman_held_karp(adj_list,vertices))
+# print(Algorithm.branch_and_bound(adj_list, vertices))
 
-# seq_bfs = Algorithm.bfs(adj_list,vertices,'v02')
-# print("BFS: " + str(seq_bfs))
+#Duong di ngan nhat
+# print(Algorithm.dijkstra(adj_list,vertices))
+# print(Algorithm.bellman_ford(vertices,edges))
+# print(Algorithm.johnson(vertices,edges))
 
-# path = Algorithm.find_path_bfs(adj_list,vertices,'v02','v01')
-# print(path)
+#Cay khung
+# print(Algorithm.prim(adj_list,vertices))
+# print(Algorithm.kruskal(vertices,edges))
+# print(Algorithm.boruvka(adj_list,edges))
+
+#Dinh cat
+# print(Algorithm.CriticalVertices(adj_list,vertices))
+
+#Canh cat
+# print(Algorithm.Bridges(adj_list,vertices))
+
+#Euler
+# print(Algorithm.hierholzer(adj_list,vertices))
+# print(Algorithm.fleury(adj_list,vertices))
