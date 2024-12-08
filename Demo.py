@@ -28,12 +28,12 @@ print(adj_list)
 #Duong di ngan nhat
 # print(Algorithm.dijkstra(adj_list,vertices))
 # print(Algorithm.bellman_ford(vertices,edges))
-# print(Algorithm.johnson(vertices,edges))
 
 #Cay khung
 # print(Algorithm.prim(adj_list,vertices))
-# print(Algorithm.kruskal(vertices,edges))
 # print(Algorithm.boruvka(adj_list,edges))
+# print(Algorithm.kruskal(vertices,edges))
+
 
 #Dinh cat
 # print(Algorithm.CriticalVertices(adj_list,vertices))

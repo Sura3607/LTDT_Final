@@ -446,7 +446,7 @@ def bellman_held_karp(adj_list, vertices):
         dp[(frozenset([k]), k)] = adj_df.iloc[0, k]
         parent[(frozenset([k]), k)] = 0  # Xuất phát từ đỉnh đầu tiên
 
-    # Xây dựng tập hợp con (subset) kích thước tăng dần
+    # Xây dựng tập hợp con (subset) kích thước tăng dần 
     for subset_size in range(2, n): 
         for subset in itertools.combinations(range(1, n), subset_size):
             subset = frozenset(subset)
